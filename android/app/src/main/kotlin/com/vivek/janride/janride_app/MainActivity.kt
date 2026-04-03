@@ -1,0 +1,5 @@
+package com.vivek.janride.janride_app
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()
