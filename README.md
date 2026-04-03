@@ -1,5 +1,7 @@
 # JanRide App
 
+JanRide - Solving Intra-City Last Mile Connectivity through a Unified Public Transport Intelligence Platform.
+
 JanRide is a Flutter rider app wired to a Node.js backend with route search, OTP login flow, profile setup, and mobility APIs.
 
 ## Project Structure
