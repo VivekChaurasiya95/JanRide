@@ -40,20 +40,21 @@ class Onboarding3 extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // Status Card Container
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5FF),
-                borderRadius: BorderRadius.circular(32),
-              ),
-              child: Column(
-                children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              // Status Card Container
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5FF),
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                child: Column(
+                  children: [
                   // Live Status Card
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -214,86 +215,87 @@ class Onboarding3 extends StatelessWidget {
                       ],
                     ),
                   ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Bheed Se Bacho',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0D1B2A),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Get live crowd alerts and heatmaps shared by fellow commuters. Know your ride before you reach the station.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.blueGrey,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Page Indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 32,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2962FF),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
                 ],
               ),
-            ),
-            const Spacer(),
-            const Text(
-              'Bheed Se Bacho',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0D1B2A),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Get live crowd alerts and heatmaps shared by fellow commuters. Know your ride before you reach the station.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.blueGrey,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 40),
-            // Page Indicator
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
+              const SizedBox(height: 30),
+              // Get Started Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/permissions');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2962FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    elevation: 0,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    shape: BoxShape.circle,
+                  child: const Text(
+                    'Get Started',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 32,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2962FF),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            // Get Started Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/permissions');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2962FF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Get Started',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
-            ),
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );

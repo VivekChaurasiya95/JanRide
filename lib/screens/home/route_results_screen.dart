@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/ride_model.dart';
 import '../../navigation/app_router.dart';
 import '../../viewmodels/ride_viewmodel.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -11,7 +11,15 @@ class RouteResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final routes = context.watch<RideViewModel>().routes;
+    final rideVm = context.watch<RideViewModel>();
+    final routes = rideVm.routes;
+    final isLoading = rideVm.isLoading;
+    final errorMessage = rideVm.errorMessage;
+    final infoMessage = rideVm.infoMessage;
+    final selectedPreference = rideVm.selectedPreference;
+    final selectedPreferenceLabel = _preferenceLabel(selectedPreference);
+    final fromStopName = rideVm.selectedFromStopName;
+    final toStopName = rideVm.selectedToStopName;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -30,7 +38,9 @@ class RouteResultsScreen extends StatelessWidget {
               style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
-              routes.isEmpty ? 'Sector 62 to Cyber Hub' : 'Backend route suggestions',
+              fromStopName != null && toStopName != null
+                  ? '$fromStopName to $toStopName'
+                  : 'Railway Station to Gwalior Fort',
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ],
@@ -46,27 +56,10 @@ class RouteResultsScreen extends StatelessWidget {
         children: [
           Column(
             children: [
-              // Map View
+              // Keep map in a dedicated widget so provider updates don't recreate platform view state.
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.4,
-                child: GoogleMap(
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(28.4595, 77.0266), // Gurugram
-                    zoom: 12,
-                  ),
-                  zoomControlsEnabled: false,
-                  polylines: {
-                    Polyline(
-                      polylineId: const PolylineId('route'),
-                      color: const Color(0xFF2962FF),
-                      width: 5,
-                      points: const [
-                        LatLng(28.6273, 77.3725), // Sector 62
-                        LatLng(28.4950, 77.0878), // Cyber Hub
-                      ],
-                    ),
-                  },
-                ),
+                child: const _RouteMapPane(),
               ),
               const SizedBox(height: 80), // Space for filters
             ],
@@ -85,11 +78,11 @@ class RouteResultsScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    _buildFilterChip(Icons.bolt, 'Fastest', true),
+                    _buildFilterChip(Icons.bolt, 'Fastest', selectedPreference == 'tez' || selectedPreference == 'fastest'),
                     const SizedBox(width: 12),
-                    _buildFilterChip(Icons.payments_outlined, 'Cheapest', false),
+                    _buildFilterChip(Icons.payments_outlined, 'Cheapest', selectedPreference == 'sasta' || selectedPreference == 'cheapest'),
                     const SizedBox(width: 12),
-                    _buildFilterChip(Icons.directions_bus_outlined, 'Direct Only', false),
+                    _buildFilterChip(Icons.directions_bus_outlined, 'Direct Only', selectedPreference == 'kam_badlav' || selectedPreference == 'fewest_transfers'),
                   ],
                 ),
               ),
@@ -99,55 +92,224 @@ class RouteResultsScreen extends StatelessWidget {
           // Results list
           Positioned.fill(
             top: MediaQuery.of(context).size.height * 0.45,
-              child: ListView(
+            child: ListView(
               padding: const EdgeInsets.all(20),
-                children: routes.isEmpty
-                    ? [
-                        _buildRouteCard(
-                          context,
-                          title: 'Auto + Metro',
-                          traffic: 'Moderate Traffic',
-                          price: '₹85',
-                          time: '22 mins',
-                          isRecommended: true,
-                          icon: Icons.electric_rickshaw,
-                          footer: '1 Transfer • Leaving in 3m',
-                        ),
-                        const SizedBox(height: 16),
-                        _buildRouteCard(
-                          context,
-                          title: 'Shared Tempo',
-                          traffic: 'Low Congestion',
-                          price: '₹40',
-                          time: '35 mins',
-                          isRecommended: false,
-                          icon: Icons.airport_shuttle,
-                          footer: '0 Transfers • 500m walk',
-                        ),
-                      ]
-                    : List<Widget>.generate(routes.length, (index) {
-                        final route = routes[index];
-                        final firstLeg = route.legs.isNotEmpty ? route.legs.first : null;
-                        final title = firstLeg == null ? 'Route ${index + 1}' : '${firstLeg.vehicle} route';
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: index == routes.length - 1 ? 0 : 16),
-                          child: _buildRouteCard(
-                            context,
-                            title: title,
-                            traffic: 'Live crowds integrated',
-                            price: '₹${route.totalFare.toStringAsFixed(0)}',
-                            time: '${route.totalTimeMinutes} mins',
-                            isRecommended: index == 0,
-                            icon: Icons.alt_route,
-                            footer: '${route.transfers} Transfers • ${route.path.join(' -> ')}',
+              children: [
+                _buildContextCard(
+                  selectedPreferenceLabel: selectedPreferenceLabel,
+                  fromStopName: fromStopName,
+                  toStopName: toStopName,
+                ),
+                if (infoMessage != null) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEAF2FF),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, size: 16, color: Color(0xFF2962FF)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            infoMessage,
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF1E3A8A)),
                           ),
-                        );
-                      }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                _buildPriceComparisonCard(routes),
+                const SizedBox(height: 16),
+                if (isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (routes.isEmpty)
+                  _buildEmptyState(errorMessage)
+                else
+                  ...List<Widget>.generate(routes.length, (index) {
+                    final route = routes[index];
+                    final firstLeg = route.legs.isNotEmpty ? route.legs.first : null;
+                    final title = firstLeg == null ? 'Route ${index + 1}' : '${firstLeg.vehicle} route';
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: index == routes.length - 1 ? 0 : 16),
+                      child: _buildRouteCard(
+                        context,
+                        title: title,
+                        traffic: route.recommendationReason,
+                        price: '₹${route.totalFare.toStringAsFixed(0)}',
+                        time: '${route.totalTimeMinutes} mins • ${route.totalDistanceKm.toStringAsFixed(2)} km',
+                        isRecommended: index == 0,
+                        icon: Icons.alt_route,
+                        footer: '${route.transfers} Transfers • ${route.path.join(' -> ')}',
+                      ),
+                    );
+                  }),
+              ],
             ),
           ),
         ],
       ),
       bottomNavigationBar: const AppBottomNavBar(currentRoute: AppRouter.search),
+    );
+  }
+
+  String _preferenceLabel(String preference) {
+    switch (preference) {
+      case 'sasta':
+      case 'cheapest':
+        return 'Sasta';
+      case 'kam_badlav':
+      case 'fewest_transfers':
+        return 'Kam Badlav';
+      case 'tez':
+      case 'fastest':
+      default:
+        return 'Tez';
+    }
+  }
+
+  Widget _buildContextCard({
+    required String selectedPreferenceLabel,
+    required String? fromStopName,
+    required String? toStopName,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FB),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.route, color: Color(0xFF2962FF)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${fromStopName ?? 'From'} -> ${toStopName ?? 'To'}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2962FF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              selectedPreferenceLabel,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPriceComparisonCard(List<RideModel> routes) {
+    final comparison = _buildPriceComparison(routes);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Price Comparison', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _buildFarePill('Auto', comparison['auto']!)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildFarePill('Shared Tempo', comparison['shared_tempo']!)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildFarePill('E-Rickshaw', comparison['e_rickshaw']!)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, double> _buildPriceComparison(List<RideModel> routes) {
+    final prices = <String, double?>{'auto': null, 'shared_tempo': null, 'e_rickshaw': null};
+    for (final route in routes) {
+      final vehicle = route.legs.isNotEmpty ? route.legs.first.vehicle.toLowerCase() : '';
+      String? key;
+      if (vehicle.contains('e-rickshaw')) {
+        key = 'e_rickshaw';
+      } else if (vehicle.contains('auto')) {
+        key = 'auto';
+      } else if (vehicle.contains('tempo') || vehicle.contains('magic')) {
+        key = 'shared_tempo';
+      }
+      if (key == null) {
+        continue;
+      }
+      final existing = prices[key];
+      if (existing == null || route.totalFare < existing) {
+        prices[key] = route.totalFare;
+      }
+    }
+
+    final baseDistance = routes.isNotEmpty && routes.first.totalDistanceKm > 0 ? routes.first.totalDistanceKm : 3.0;
+    final output = <String, double>{
+      'auto': prices['auto'] ?? _estimateFare(baseDistance, perKm: 12, baseFare: 20, minFare: 45),
+      'shared_tempo': prices['shared_tempo'] ?? _estimateFare(baseDistance, perKm: 5, baseFare: 8, minFare: 15),
+      'e_rickshaw': prices['e_rickshaw'] ?? _estimateFare(baseDistance, perKm: 8, baseFare: 12, minFare: 30),
+    };
+    return output;
+  }
+
+  double _estimateFare(double distanceKm, {required double perKm, required double baseFare, required double minFare}) {
+    final fare = baseFare + (distanceKm * perKm);
+    return fare < minFare ? minFare : fare.roundToDouble();
+  }
+
+  Widget _buildFarePill(String label, double fare) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5FF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+          const SizedBox(height: 2),
+          Text(
+            'Rs ${fare.toStringAsFixed(0)}',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2962FF)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String? errorMessage) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Text(
+        errorMessage ?? 'No route found for this location pair. Try switching preference.',
+        style: const TextStyle(color: Colors.blueGrey),
+      ),
     );
   }
 
@@ -235,7 +397,14 @@ class RouteResultsScreen extends StatelessWidget {
                           children: [
                             const Icon(Icons.trending_up, size: 14, color: Colors.orange),
                             const SizedBox(width: 4),
-                            Text(traffic, style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold)),
+                            Expanded(
+                              child: Text(
+                                traffic,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -254,20 +423,63 @@ class RouteResultsScreen extends StatelessWidget {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  const Icon(Icons.sync, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(footer.split('•')[0], style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                  const Spacer(),
-                  const Icon(Icons.access_time, size: 16, color: Colors.green),
-                  const SizedBox(width: 4),
-                  Text(footer.split('•')[1], style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)),
-                ],
+              child: LayoutBuilder(
+                builder: (context, _) {
+                  final segments = footer.split('•');
+                  final left = segments.isNotEmpty ? segments.first.trim() : footer;
+                  final right = segments.length > 1 ? segments[1].trim() : '';
+                  return Row(
+                    children: [
+                      const Icon(Icons.sync, size: 16, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          left,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ),
+                      if (right.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.access_time, size: 16, color: Colors.green),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            right,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RouteMapPane extends StatefulWidget {
+  const _RouteMapPane();
+
+  @override
+  State<_RouteMapPane> createState() => _RouteMapPaneState();
+}
+
+class _RouteMapPaneState extends State<_RouteMapPane> {
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      child: Image.asset(
+        'assets/images/permission_map.png',
+        fit: BoxFit.cover,
+        width: double.infinity,
       ),
     );
   }

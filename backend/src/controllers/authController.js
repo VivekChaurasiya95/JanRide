@@ -4,9 +4,10 @@ import {
   sendOtp,
   upsertPreferences,
   upsertProfile,
-  verifyGoogleToken,
+  verifyFirebaseToken,
   verifyOtp,
 } from '../services/authService.js';
+import { HttpError } from '../utils/httpError.js';
 
 const sendOtpSchema = z.object({
   phoneE164: z.string().regex(/^\+\d{10,15}$/),
@@ -19,7 +20,7 @@ const verifyOtpSchema = z.object({
 });
 
 const verifyGoogleSchema = z.object({
-  token: z.string().min(8),
+  token: z.string().min(8).optional(),
 });
 
 const profileSchema = z.object({
@@ -45,9 +46,38 @@ export function postVerifyOtp(req, res) {
   res.json(verifyOtp(payload));
 }
 
-export function postVerifyGoogle(req, res) {
-  const payload = verifyGoogleSchema.parse(req.body);
-  res.json(verifyGoogleToken(payload.token));
+export async function postVerifyGoogle(req, res) {
+  const payload = verifyGoogleSchema.parse(req.body ?? {});
+  const token = _extractBearerOrBodyToken(req, payload.token);
+  res.json(await verifyFirebaseToken(token));
+}
+
+export async function postVerifyFirebaseToken(req, res) {
+  const payload = verifyGoogleSchema.parse(req.body ?? {});
+  const token = _extractBearerOrBodyToken(req, payload.token);
+  const result = await verifyFirebaseToken(token);
+  res.json({
+    uid: result.user.id,
+    phoneNumber: result.user.phone || null,
+    email: result.user.email || null,
+    isNewUser: !result.profileCompleted,
+    accessToken: result.accessToken,
+    user: result.user,
+    profileCompleted: result.profileCompleted,
+  });
+}
+
+function _extractBearerOrBodyToken(req, bodyToken) {
+  const authHeader = req.headers.authorization ?? '';
+  const bearerToken = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : '';
+
+  const token = bearerToken || (bodyToken ?? '').trim();
+  if (!token) {
+    throw new HttpError(400, 'Missing Firebase token. Send Authorization: Bearer <token> or token in body.');
+  }
+  return token;
 }
 
 export function getMe(req, res) {

@@ -26,6 +26,7 @@ class PermissionViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isUpdatingLocation = false;
   bool _isUpdatingNotifications = false;
+  bool _isDisposed = false;
 
   bool get locationEnabled => _locationEnabled;
   bool get notificationsEnabled => _notificationsEnabled;
@@ -36,18 +37,21 @@ class PermissionViewModel extends ChangeNotifier {
   bool get isUpdatingNotifications => _isUpdatingNotifications;
 
   Future<void> _init() async {
+    if (_isDisposed) return;
     _locationGranted = await Permission.location.isGranted;
+    if (_isDisposed) return;
     final notificationStatus = await Permission.notification.status;
     _notificationsGranted =
         notificationStatus.isGranted || notificationStatus.isProvisional;
 
     final prefs = await SharedPreferences.getInstance();
+    if (_isDisposed) return;
     _locationEnabled = prefs.getBool(_locationEnabledKey) ?? _locationGranted;
     _notificationsEnabled =
         prefs.getBool(_notificationsEnabledKey) ?? _notificationsGranted;
 
     await _flushPendingSync();
-    notifyListeners();
+    _safeNotifyListeners();
   }
 
   Future<bool> setLocationEnabled(bool value) async {
@@ -57,7 +61,7 @@ class PermissionViewModel extends ChangeNotifier {
     final wasGranted = _locationGranted;
 
     _isUpdatingLocation = true;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       _locationEnabled = value;
       if (value) {
@@ -71,7 +75,7 @@ class PermissionViewModel extends ChangeNotifier {
       unawaited(_syncPreferencesToBackend());
     } finally {
       _isUpdatingLocation = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
 
     return showGrantedPopup;
@@ -81,7 +85,7 @@ class PermissionViewModel extends ChangeNotifier {
     if (_isUpdatingNotifications) return;
 
     _isUpdatingNotifications = true;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       _notificationsEnabled = value;
       if (value) {
@@ -93,7 +97,7 @@ class PermissionViewModel extends ChangeNotifier {
       unawaited(_syncPreferencesToBackend());
     } finally {
       _isUpdatingNotifications = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
@@ -192,12 +196,23 @@ class PermissionViewModel extends ChangeNotifier {
 
   Future<void> _runWithLoading(Future<void> Function() action) async {
     _isLoading = true;
-    notifyListeners();
+    _safeNotifyListeners();
     try {
       await action();
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
+  }
+
+  void _safeNotifyListeners() {
+    if (_isDisposed) return;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    super.dispose();
   }
 }

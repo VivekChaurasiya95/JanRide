@@ -8,8 +8,11 @@ import 'services/location_service.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/home_viewmodel.dart';
 import 'viewmodels/ride_viewmodel.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();   // ✅ ADD
+  await Firebase.initializeApp();              // ✅ ADD
   runApp(const JanRideApp());
 }
 

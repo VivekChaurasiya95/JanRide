@@ -15,6 +15,14 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
 
+  void _skipLogin() {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRouter.home,
+      (route) => false,
+    );
+  }
+
   @override
   void dispose() {
     _phoneController.dispose();
@@ -40,7 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (vm.errorMessage != null) {
-      Navigator.pushNamed(context, AppRouter.authError, arguments: vm.errorMessage);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(vm.errorMessage!)),
+      );
       return;
     }
 
@@ -116,7 +126,16 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 48),
+                                TextButton(
+                                  onPressed: vm.isLoading ? null : _skipLogin,
+                                  child: const Text(
+                                    'Skip',
+                                    style: TextStyle(
+                                      color: Color(0xFF2563EB),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -273,6 +292,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: const Text(
                                   'Continue with Google',
                                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0D1B2A)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: vm.isLoading ? null : _skipLogin,
+                                icon: const Icon(Icons.skip_next_rounded, size: 18),
+                                label: const Text(
+                                  'Skip Login',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF2563EB),
                                 ),
                               ),
                             ),

@@ -1,4 +1,4 @@
-const baseUrl = process.env.JANRIDE_API_BASE ?? 'http://localhost:8080';
+const baseUrl = process.env.JANRIDE_API_BASE ?? 'http://localhost:5000';
 
 async function run() {
   const health = await fetchJson('/health');

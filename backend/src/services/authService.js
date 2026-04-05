@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 
 import { env } from '../config/env.js';
+import { verifyFirebaseIdToken } from './firebaseAdmin.js';
 import { HttpError } from '../utils/httpError.js';
 
 const otpStore = new Map();
@@ -47,20 +48,24 @@ export function verifyOtp({ phoneE164, verificationId, otpCode }) {
   };
 }
 
-export function verifyGoogleToken(token) {
+export async function verifyFirebaseToken(token) {
   if (!token || token.length < 8) {
-    throw new HttpError(401, 'Invalid Google token');
+    throw new HttpError(401, 'Invalid Firebase token');
   }
 
-  // Dev-safe behavior: allow local integration before Firebase Admin is configured.
-  if (!token.startsWith('dev-')) {
-    throw new HttpError(
-      501,
-      'Firebase Google token verification not configured yet. Set up Firebase Admin and replace dev token flow.',
-    );
+  const decoded = await verifyFirebaseIdToken(token);
+  const phone = decoded.phone_number ?? '';
+  const email = decoded.email ?? null;
+  const name = decoded.name ?? 'JanRide User';
+  if (!phone && !email) {
+    throw new HttpError(400, 'Firebase token is missing phone/email identity');
   }
 
-  const user = getOrCreateUser({ phone: '+910000000000', email: 'dev.user@janride.app', name: 'JanRide Dev User' });
+  const user = getOrCreateUser({
+    phone: phone || '+910000000000',
+    email,
+    name,
+  });
   const accessToken = issueAccessToken(user.id);
   return {
     accessToken,

@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+
+import '../../navigation/app_router.dart';
 import '../../utils/app_images.dart';
 import 'onboarding_3.dart';
 
-class Onboarding2 extends StatelessWidget {
+class Onboarding2 extends StatefulWidget {
   const Onboarding2({super.key});
+
+  @override
+  State<Onboarding2> createState() => _Onboarding2State();
+}
+
+class _Onboarding2State extends State<Onboarding2> {
+  int _selectedVehicleIndex = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +68,8 @@ class Onboarding2 extends StatelessWidget {
                 title: 'Auto Rickshaw',
                 price: '₹40 - ₹60',
                 imagePath: AppImages.onboardingBajaj,
-                isSelected: true,
+                isSelected: _selectedVehicleIndex == 0,
+                onSelect: () => setState(() => _selectedVehicleIndex = 0),
               ),
               const SizedBox(height: 16),
               _buildTransportCard(
@@ -68,7 +78,8 @@ class Onboarding2 extends StatelessWidget {
                 title: 'Shared Tempo',
                 price: '₹20 - ₹40',
                 imagePath: AppImages.onboardingJsaCng,
-                isSelected: false,
+                isSelected: _selectedVehicleIndex == 1,
+                onSelect: () => setState(() => _selectedVehicleIndex = 1),
               ),
               const SizedBox(height: 16),
               _buildTransportCard(
@@ -77,7 +88,8 @@ class Onboarding2 extends StatelessWidget {
                 title: 'E-Rickshaw',
                 price: '₹10 - ₹30',
                 imagePath: AppImages.onboardingErickshaw,
-                isSelected: false,
+                isSelected: _selectedVehicleIndex == 2,
+                onSelect: () => setState(() => _selectedVehicleIndex = 2),
               ),
               
               const SizedBox(height: 40),
@@ -119,7 +131,11 @@ class Onboarding2 extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        AppRouter.permissions,
+                        (route) => false,
+                      ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -174,6 +190,7 @@ class Onboarding2 extends StatelessWidget {
     required String price,
     required String imagePath,
     required bool isSelected,
+    required VoidCallback onSelect,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -225,7 +242,7 @@ class Onboarding2 extends StatelessWidget {
                   width: 120,
                   height: 40,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: onSelect,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isSelected ? const Color(0xFF2962FF) : const Color(0xFFF1F5F9),
                       foregroundColor: isSelected ? Colors.white : Colors.black,

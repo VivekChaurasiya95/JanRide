@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "980213333182",
+    "project_id": "janride-74062",
+    "storage_bucket": "janride-74062.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:980213333182:android:f49af9b61a0f3a0f8472ef",
+        "android_client_info": {
+          "package_name": "com.vivek.janride.janride_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "980213333182-329tc4d7ok2cte2tsq3l56os8rlqhaqe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vivek.janride.janride_app",
+            "certificate_hash": "68b332f255f37fb37f39baeda95278d0f2efab6e"
+          }
+        },
+        {
+          "client_id": "980213333182-55n0mtnmc38t31eic1g2aj7g5ev4thlt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAIABM79e_SjSCV6f-V7mfApX3hlkJwaxE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "980213333182-55n0mtnmc38t31eic1g2aj7g5ev4thlt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

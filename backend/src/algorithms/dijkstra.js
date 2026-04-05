@@ -1,4 +1,12 @@
-export function findBestRoute({ graph, from, to, alpha = 1, beta = 1, gamma = 1 }) {
+export function findBestRoute({
+  graph,
+  from,
+  to,
+  alpha = 1,
+  beta = 1,
+  gamma = 1,
+  delta = 0,
+}) {
   const distances = new Map();
   const previous = new Map();
   const queue = new Set();
@@ -20,7 +28,11 @@ export function findBestRoute({ graph, from, to, alpha = 1, beta = 1, gamma = 1 
 
     const edges = graph.get(current) ?? [];
     for (const edge of edges) {
-      const cost = alpha * edge.fare + beta * edge.durationMinutes + gamma * edge.transferPenalty;
+      const cost =
+        alpha * edge.fare +
+        beta * edge.durationMinutes +
+        gamma * edge.transferPenalty +
+        delta * (edge.crowdPenalty ?? 0);
       const nextDistance = (distances.get(current) ?? Infinity) + cost;
       if (nextDistance < (distances.get(edge.to) ?? Infinity)) {
         distances.set(edge.to, nextDistance);
@@ -45,13 +57,32 @@ export function findBestRoute({ graph, from, to, alpha = 1, beta = 1, gamma = 1 
 
   const totalFare = legs.reduce((sum, leg) => sum + leg.fare, 0);
   const totalTimeMinutes = legs.reduce((sum, leg) => sum + leg.durationMinutes, 0);
+  const totalDistanceKm = legs.reduce((sum, leg) => sum + (leg.distanceKm ?? 0), 0);
+  const totalTransferPenalty = legs.reduce((sum, leg) => sum + (leg.transferPenalty ?? 1), 0);
+  const totalCrowdPenalty = legs.reduce((sum, leg) => sum + (leg.crowdPenalty ?? 0), 0);
+  const transfers = Math.max(path.length - 2, 0);
 
   return {
     path,
     legs,
     totalFare,
     totalTimeMinutes,
-    transfers: Math.max(path.length - 2, 0),
+    totalDistanceKm,
+    transfers,
+    totalTransferPenalty,
+    totalCrowdPenalty,
+    objectiveBreakdown: {
+      fare: totalFare,
+      timeMinutes: totalTimeMinutes,
+      transfers,
+      transferPenalty: totalTransferPenalty,
+      crowdPenalty: totalCrowdPenalty,
+      weightedCost:
+        alpha * totalFare +
+        beta * totalTimeMinutes +
+        gamma * totalTransferPenalty +
+        delta * totalCrowdPenalty,
+    },
     score: distances.get(to) ?? 0,
   };
 }

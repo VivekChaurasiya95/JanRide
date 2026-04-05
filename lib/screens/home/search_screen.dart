@@ -1,15 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/location_model.dart';
 import '../../navigation/app_router.dart';
+import '../../viewmodels/home_viewmodel.dart';
 import '../../viewmodels/ride_viewmodel.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
-class SearchScreen extends StatelessWidget {
+class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
 
   @override
+  State<SearchScreen> createState() => _SearchScreenState();
+}
+
+class _SearchScreenState extends State<SearchScreen> {
+  LocationModel? _fromStop;
+  LocationModel? _toStop;
+  String _selectedPreference = 'tez';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final homeVm = context.read<HomeViewModel>();
+      if (homeVm.stops.isEmpty && !homeVm.isLoading) {
+        await homeVm.initialize();
+      }
+      if (!mounted) {
+        return;
+      }
+      _seedDefaultStops(homeVm.stops);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final homeVm = context.watch<HomeViewModel>();
+    final stops = homeVm.stops;
+    if (_fromStop == null && stops.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        _seedDefaultStops(stops);
+      });
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -39,15 +76,15 @@ class SearchScreen extends StatelessWidget {
                 _buildSearchInput(
                   icon: Icons.my_location,
                   iconColor: const Color(0xFF2962FF),
-                  hint: 'Current Location',
-                  isCurrent: true,
+                  hint: _fromStop?.name ?? 'Current Location',
+                  onTap: () => _pickStop(isFromStop: true, stops: stops),
                 ),
                 const SizedBox(height: 12),
                 _buildSearchInput(
                   icon: Icons.location_on,
                   iconColor: Colors.red,
-                  hint: 'Where to?',
-                  isCurrent: false,
+                  hint: _toStop?.name ?? 'Where to?',
+                  onTap: () => _pickStop(isFromStop: false, stops: stops),
                 ),
               ],
             ),
@@ -73,11 +110,17 @@ class SearchScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
-                _buildPreferenceTab('Sasta', false),
+                _buildPreferenceTab('Sasta', _selectedPreference == 'sasta', () {
+                  setState(() => _selectedPreference = 'sasta');
+                }),
                 const SizedBox(width: 8),
-                _buildPreferenceTab('Tez', true),
+                _buildPreferenceTab('Tez', _selectedPreference == 'tez', () {
+                  setState(() => _selectedPreference = 'tez');
+                }),
                 const SizedBox(width: 8),
-                _buildPreferenceTab('Kam Badlav', false),
+                _buildPreferenceTab('Kam Badlav', _selectedPreference == 'kam_badlav', () {
+                  setState(() => _selectedPreference = 'kam_badlav');
+                }),
               ],
             ),
           ),
@@ -101,9 +144,9 @@ class SearchScreen extends StatelessWidget {
           Expanded(
             child: ListView(
               children: [
-                _buildRecentSearchItem('Rajiv Chowk Metro', 'New Delhi, Delhi'),
-                _buildRecentSearchItem('Cyber Hub', 'Gurugram, Haryana'),
-                _buildRecentSearchItem('Indira Gandhi Airport (T3)', 'New Delhi'),
+                _buildRecentSearchItem('Maharaj Bada', 'Gwalior, Madhya Pradesh'),
+                _buildRecentSearchItem('Gwalior Fort', 'Gwalior, Madhya Pradesh'),
+                _buildRecentSearchItem('Gwalior Railway Station', 'Gwalior, Madhya Pradesh'),
                 const SizedBox(height: 24),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20),
@@ -150,17 +193,22 @@ class SearchScreen extends StatelessWidget {
               height: 56,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  final vm = context.read<RideViewModel>();
-                  await vm.searchRoutes(fromStopId: 'S1', toStopId: 'S2', preference: 'fastest');
-                  if (!context.mounted) return;
-
-                  if (vm.errorMessage != null) {
+                  if (_fromStop == null || _toStop == null || _fromStop!.id == _toStop!.id) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(vm.errorMessage!)),
+                      const SnackBar(content: Text('Please choose two different locations.')),
                     );
                     return;
                   }
+
                   Navigator.pushNamed(context, AppRouter.routeResults);
+                  final vm = context.read<RideViewModel>();
+                  await vm.searchRoutes(
+                    fromStopId: _fromStop!.id,
+                    toStopId: _toStop!.id,
+                    preference: _selectedPreference,
+                    fromStopName: _fromStop!.name,
+                    toStopName: _toStop!.name,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2962FF),
@@ -180,40 +228,137 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSearchInput({required IconData icon, required Color iconColor, required String hint, required bool isCurrent}) {
+  void _seedDefaultStops(List<LocationModel> stops) {
+    if (stops.isEmpty) {
+      return;
+    }
+    final station = _findStopByName(stops, 'Gwalior Railway Station') ?? stops.first;
+    final fort = _findStopByName(stops, 'Gwalior Fort (Man Singh Palace)') ?? (stops.length > 1 ? stops[1] : stops.first);
+    setState(() {
+      _fromStop ??= station;
+      _toStop ??= fort;
+      if (_fromStop?.id == _toStop?.id && stops.length > 1) {
+        _toStop = stops.firstWhere((stop) => stop.id != _fromStop!.id, orElse: () => fort);
+      }
+    });
+  }
+
+  LocationModel? _findStopByName(List<LocationModel> stops, String name) {
+    for (final stop in stops) {
+      if (stop.name.toLowerCase() == name.toLowerCase()) {
+        return stop;
+      }
+    }
+    return null;
+  }
+
+  Future<void> _pickStop({required bool isFromStop, required List<LocationModel> stops}) async {
+    var availableStops = stops;
+    if (availableStops.isEmpty) {
+      final homeVm = context.read<HomeViewModel>();
+      if (!homeVm.isLoading) {
+        await homeVm.initialize();
+      }
+      if (!mounted) {
+        return;
+      }
+      availableStops = homeVm.stops;
+    }
+
+    if (availableStops.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Stops are still loading, please wait.')),
+      );
+      return;
+    }
+
+    final selected = await showModalBottomSheet<LocationModel>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ListView.builder(
+            itemCount: availableStops.length,
+            itemBuilder: (context, index) {
+              final stop = availableStops[index];
+              return ListTile(
+                leading: const Icon(Icons.location_on_outlined, color: Color(0xFF2962FF)),
+                title: Text(stop.name),
+                subtitle: Text(stop.city ?? 'Gwalior'),
+                onTap: () => Navigator.pop(context, stop),
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    setState(() {
+      if (isFromStop) {
+        _fromStop = selected;
+      } else {
+        _toStop = selected;
+      }
+    });
+  }
+
+  Widget _buildSearchInput({required IconData icon, required Color iconColor, required String hint, required VoidCallback onTap}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          icon: Icon(icon, color: iconColor),
-          hintText: hint,
-          border: InputBorder.none,
-          hintStyle: TextStyle(color: isCurrent ? Colors.black : Colors.grey, fontWeight: isCurrent ? FontWeight.w500 : FontWeight.normal),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  hint,
+                  style: TextStyle(
+                    color: hint == 'Where to?' ? Colors.grey : Colors.black,
+                    fontWeight: hint == 'Where to?' ? FontWeight.normal : FontWeight.w500,
+                  ),
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_down, color: Colors.blueGrey),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPreferenceTab(String title, bool isSelected) {
+  Widget _buildPreferenceTab(String title, bool isSelected, VoidCallback onTap) {
     return Expanded(
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : const Color(0xFFF1F5FF),
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: Colors.grey.shade200) : null,
-          boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : null,
-        ),
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF2962FF) : Colors.blueGrey,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 44,
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : const Color(0xFFF1F5FF),
+            borderRadius: BorderRadius.circular(12),
+            border: isSelected ? Border.all(color: Colors.grey.shade200) : null,
+            boxShadow: isSelected ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)] : null,
+          ),
+          child: Center(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFF2962FF) : Colors.blueGrey,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
         ),
@@ -233,3 +378,5 @@ class SearchScreen extends StatelessWidget {
     );
   }
 }
+
+

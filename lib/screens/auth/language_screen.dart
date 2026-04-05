@@ -47,93 +47,102 @@ class _LanguageScreenState extends State<LanguageScreen> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // Illustration
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF7E6),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Center(
-                child: Image.asset(
-                  AppImages.languageGlobe,
-                  height: 150,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Choose Your Language',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0D1B2A),
-              ),
-            ),
-            const Text(
-              'अपनी भाषा चुनें',
-              style: TextStyle(
-                fontSize: 20,
-                color: Color(0xFF0D1B2A),
-              ),
-            ),
-            const SizedBox(height: 32),
-            _buildLanguageOption(
-              'English',
-              'Default App Language',
-              'Aa',
-            ),
-            const SizedBox(height: 16),
-            _buildLanguageOption(
-              'Hindi (हिन्दी)',
-              'पूर्ण हिंदी इंटरफेस',
-              'अ',
-            ),
-            const SizedBox(height: 16),
-            _buildLanguageOption(
-              'Hinglish',
-              'Mix of Hindi and English',
-              'H/हि',
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2962FF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
                   children: [
-                    Text(
-                      'Continue',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    const SizedBox(height: 20),
+                    // Illustration
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF7E6),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Center(
+                        child: Image.asset(
+                          AppImages.languageGlobe,
+                          height: 150,
+                        ),
+                      ),
                     ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward, color: Colors.white),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Choose Your Language',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0D1B2A),
+                      ),
+                    ),
+                    const Text(
+                      'अपनी भाषा चुनें',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Color(0xFF0D1B2A),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildLanguageOption(
+                      'English',
+                      'Default App Language',
+                      'Aa',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildLanguageOption(
+                      'Hindi (हिन्दी)',
+                      'पूर्ण हिंदी इंटरफेस',
+                      'अ',
+                    ),
+                    const SizedBox(height: 16),
+                    _buildLanguageOption(
+                      'Hinglish',
+                      'Mix of Hindi and English',
+                      'H/हि',
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2962FF),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(28),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Continue',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward, color: Colors.white),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
-          ],
+            );
+          },
         ),
       ),
     );

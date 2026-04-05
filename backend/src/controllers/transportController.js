@@ -30,8 +30,19 @@ export function postRouteSearch(req, res) {
 
 export function postCrowdReport(req, res) {
   const payload = crowdSchema.parse(req.body);
-  const report = addCrowdReport({ ...payload, user_id: req.user.id });
-  res.status(201).json({ report });
+  const report = addCrowdReport({
+    ...payload,
+    user_id: req.user.id,
+    userTrustScore: req.user.trustScore ?? 0.5,
+  });
+  res.status(201).json({
+    report,
+    validation: {
+      accepted: report.isValid,
+      trustWeight: report.trustWeight,
+      trustFactors: report.trustFactors,
+    },
+  });
 }
 
 export function fetchCrowdReports(_req, res) {

@@ -4,11 +4,11 @@ class AppImages {
   static const onboardingJsaCng = 'assets/images/onboarding_jsa_cng.jpg';
   static const onboardingErickshaw = 'assets/images/onboarding_erickshaw.jpg';
   static const permissionMap = 'assets/images/permission_map.png';
-  static const languageGlobe = 'assets/images/language_globe.jpg';
+  static const languageGlobe = 'assets/images/language_global.jpg';
 
   static const profileAvatar = 'assets/images/profile_screen_avatar.jpg';
   static const profileEditAvatar = 'assets/images/profile_edit_avatar.jpg';
-  static const dashboardBanner = 'assets/images/dashboard_banner.jpg';
+  static const dashboardBanner = 'assets/images/login_hero.jpg';
 
   static const rideMap = 'assets/images/ride_map.jpg';
   static const ratingDriver = 'assets/images/rating_driver.jpg';

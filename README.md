@@ -17,7 +17,7 @@ JanRide is a Flutter rider app wired to a Node.js backend with route search, OTP
 
 ```bash
 flutter pub get
-flutter run --dart-define=JANRIDE_API_BASE=http://10.0.2.2:8080
+flutter run --dart-define=JANRIDE_API_BASE=http://10.0.2.2:5000
 ```
 
 ## Backend Setup
@@ -44,12 +44,12 @@ node scripts/smoke-test.mjs
 
 ## Current Auth Mode
 
-- OTP flow is wired end-to-end for development.
-- Default dev OTP code is `123456` (from `.env`).
-- Google login currently uses dev token handshake and should be replaced with Firebase Auth ID token verification for production.
+- Mobile OTP is verified by Firebase Auth on the app.
+- App exchanges Firebase ID token with backend `/v1/auth/verify` to receive JanRide access token.
+- Backend still keeps dev OTP endpoints for local-only API testing.
 
 ## Next Production Tasks
 
-- Integrate Firebase Auth (`google-services.json`, Android SHA keys, ID token exchange).
+- Keep Firebase Auth config in sync (`google-services.json`, Android SHA keys, backend Admin credentials).
 - Replace mock/in-memory backend stores with Firestore collections.
 - Add FCM push notifications and real-time crowd updates.
