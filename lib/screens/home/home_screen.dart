@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../navigation/app_router.dart';
+import '../../utils/app_images.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,32 +12,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late GoogleMapController mapController;
-
-  // Initial location (Gwalior)
-  final LatLng _center = const LatLng(26.2124, 78.1772);
-
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Google Map Background
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _center,
-              zoom: 15.0,
+          // 1. Static map background for home preview
+          Positioned.fill(
+            child: Image.asset(
+              AppImages.permissionMap,
+              fit: BoxFit.cover,
             ),
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            mapType: MapType.normal,
-            markers: _buildMarkers(),
           ),
 
           // 2. Top Search Bar (Floating)
@@ -271,18 +256,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Set<Marker> _buildMarkers() {
-    return {
-      const Marker(
-        markerId: MarkerId('v1'),
-        position: LatLng(26.2180, 78.1850),
-        infoWindow: InfoWindow(title: 'Vehicle Available'),
-      ),
-      const Marker(
-        markerId: MarkerId('v2'),
-        position: LatLng(26.2080, 78.1720),
-        infoWindow: InfoWindow(title: 'Vehicle Available'),
-      ),
-    };
-  }
 }

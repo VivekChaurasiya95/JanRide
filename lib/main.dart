@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'navigation/app_router.dart';
+import 'services/activity_service.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
 import 'services/location_service.dart';
+import 'viewmodels/activity_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
 import 'viewmodels/home_viewmodel.dart';
 import 'viewmodels/ride_viewmodel.dart';
@@ -28,9 +30,16 @@ class JanRideApp extends StatelessWidget {
         ProxyProvider<ApiService, AuthService>(
           update: (_, apiService, __) => AuthService(apiService),
         ),
+        ProxyProvider<ApiService, ActivityService>(
+          update: (_, apiService, __) => ActivityService(apiService),
+        ),
         ChangeNotifierProxyProvider<AuthService, AuthViewModel>(
           create: (context) => AuthViewModel(context.read<AuthService>()),
           update: (_, authService, vm) => vm ?? AuthViewModel(authService),
+        ),
+        ChangeNotifierProxyProvider<ActivityService, ActivityViewModel>(
+          create: (context) => ActivityViewModel(context.read<ActivityService>()),
+          update: (_, activityService, vm) => vm ?? ActivityViewModel(activityService),
         ),
         ChangeNotifierProxyProvider2<ApiService, LocationService, HomeViewModel>(
           create: (context) => HomeViewModel(context.read<ApiService>(), context.read<LocationService>()),

@@ -25,6 +25,9 @@ import '../screens/profile/settings_privacy_screen.dart';
 import '../screens/profile/help_support_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/wallet_screen.dart';
+import '../screens/profile/activity_history_screen.dart';
+import '../screens/profile/favorite_routes_screen.dart';
+import '../screens/profile/refer_earn_screen.dart';
 import '../screens/profile/user_dashboard_screen.dart';
 
 class AppRouter {
@@ -50,6 +53,9 @@ class AppRouter {
   static const editProfile = '/edit_profile';
   static const wallet = '/wallet';
   static const dashboard = '/dashboard';
+  static const activityHistory = '/activity_history';
+  static const favoriteRoutes = '/favorite_routes';
+  static const referEarn = '/refer_earn';
   static const routeResults = '/route_results';
   static const bookingStatus = '/booking_status';
   static const tracking = '/tracking';
@@ -67,6 +73,9 @@ class AppRouter {
       case tracking:
         return 1;
       case dashboard:
+      case activityHistory:
+      case favoriteRoutes:
+      case referEarn:
         return 2;
       case notifications:
         return 3;
@@ -163,6 +172,15 @@ class AppRouter {
 
       case dashboard:
         return MaterialPageRoute(builder: (_) => const UserDashboardScreen());
+
+      case activityHistory:
+        return MaterialPageRoute(builder: (_) => const ActivityHistoryScreen());
+
+      case favoriteRoutes:
+        return MaterialPageRoute(builder: (_) => const FavoriteRoutesScreen());
+
+      case referEarn:
+        return MaterialPageRoute(builder: (_) => const ReferEarnScreen());
 
       case routeResults:
         return MaterialPageRoute(builder: (_) => const RouteResultsScreen());

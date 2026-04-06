@@ -53,3 +53,4 @@ app.*.map.json
 /android/app/release
 android/local.properties
 backend/node_modules/
+android/app/google-services.json

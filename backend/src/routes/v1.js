@@ -17,6 +17,11 @@ import {
   postCrowdReport,
   postRouteSearch,
 } from '../controllers/transportController.js';
+import {
+  fetchActivityDashboard,
+  fetchActivityHistory,
+  postStartTrip,
+} from '../controllers/activityController.js';
 import { authenticate } from '../middleware/authenticate.js';
 
 export const v1Router = Router();
@@ -34,6 +39,10 @@ v1Router.get('/analytics/peak-hours', fetchPeakHours);
 
 v1Router.get('/crowd-reports', fetchCrowdReports);
 v1Router.post('/crowd-report', authenticate, postCrowdReport);
+
+v1Router.get('/activity/dashboard', fetchActivityDashboard);
+v1Router.get('/activity/history', fetchActivityHistory);
+v1Router.post('/activity/start-trip', postStartTrip);
 
 v1Router.get('/me', authenticate, getMe);
 v1Router.put('/me/profile', authenticate, putMyProfile);
